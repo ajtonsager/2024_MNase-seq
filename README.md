@@ -39,7 +39,7 @@ For the analyses conducted in Chapter 3 of my dissertation, I obtained data from
 | FACT | *spt16-G132D* 30C, 37C | Feng et al., 2016 | [GSE66215](https://www.ncbi.xyz/geo/query/acc.cgi?acc=GSE66215) |
 | FACT | *pob3-Q308K* | McCullough et al., 2019 | [GSE118332](https://www.ncbi.xyz/geo/query/acc.cgi?acc=GSE118332) |
 | RNAPII | *rpb1-1* 30C, 37C | Feng et al., 2016 | [GSE66215](https://www.ncbi.xyz/geo/query/acc.cgi?acc=GSE66215) |
-| RNAPII | *rpb1-TPY,FSP | Connell et al., 2022 | [GSE184955](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE184955) |
+| RNAPII | *rpb1-TPY,FSP* | Connell et al., 2022 | [GSE184955](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE184955) |
 
 When obtaining the data, obtain **bigWigs** (.bw) for this pipeline. If the file type for a dataset of interest is in the **wiggle** (.wig) format, it can still be incorporated into the analysis by first compressing it into a bigWig using the `wigToBigWig` program from the [binary utilities directory from UCSC](https://hgdownload.soe.ucsc.edu/admin/exe/). 
 
