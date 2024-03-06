@@ -50,14 +50,62 @@ The list of yeast transcription start sites used for Chapter 3 was derived from 
 
 This gene list was ranked by Rpb3 occupancy as described in Chapter 3 of my dissertation. Rpb3 ChIP-seq data was kindly provided by Dr. Sarah Swygert from our department, published in [Swygert et al., 2019](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6368455/). Genes were ranked by Rpb3 occupancy in a region spanning  -500 to 0 relative to the mapped TSS locations in the `Pelechano.2013_mRNA.gtf` master gene list. The result is stored in the `Rpb3_quartiles.txt` file, where Quartile Q1 represented the lowest Rpb3 and Q4 represented the highest Rpb3 occupancy. Notably, the column header contains the label `deepTools_group`, which is required for recognition of the different quartiles when plotting the data.
 
-Genes were separately ranked into a list by length, defined as the length between the mapped TSS and TES genomic locations contained within the annotation file.
+Genes were separately ranked into a list by length, defined as the length between the mapped TSS and TES genomic locations contained within the annotation file. As with the annotation ranked by Rpb3 occupancy, the final column has the `deepTools_group` header, which needs to be unchanged for recognition of the quartiles as separate lists.
 
 ## 2. Generate median coverage tracks for replicate samples using WiggleTools
 ### Generate average bigWig tracks 
+WiggleTools was used to calculate average scores from bigWigs coming from replicate datasets from both mutant and control samples. This step was performed for Figures 3.3 - 3.5 of the dissertation. The `mean` function was used to calculate the average score and the `write` function was used to write the scores to a new wiggle file.
+```
+source activate wiggletools
+wiggletools write [sample]-avg.wig mean [sample]-1.bw [sample]-2.bw ... [sample]-n.bw
+```
 
 ### Remove 2-micron sequence from wiggle file if present
+Some of the wiggle files contain scores over the 2-micron plasmid (files from *pob3-Q308K* dataset in this analysis) and they were removed from the wiggle file prior to compression into bigWigs using `sed`.
+```
+ sed -i '/2-micron/d' WT-avg.wig
+```
 
 ### Use wigToBigWig to compress average wiggle files
+The average wiggle files produced with WiggleTools was compressed using `wigToBigWig` tool from the [binary utilities directory from UCSC](https://hgdownload.soe.ucsc.edu/admin/exe/). As stated on the directory, if this utility is freshly downloaded, you will need to update the file system permissions to allow your operating system to run the program.
+```
+   chmod +x ./filePath/wigToBigWig
+```
+To compress the wiggle file into a bigWig, you need a file containing the size of each chromosome. This is provided in the `sacCer3.chrom.sizes` file, which was obtained from UCSC [here:](https://hgdownload.soe.ucsc.edu/goldenPath/sacCer3/bigZips/).
+```
+./wigToBigWig [sample]-avg.wig sacCer3.chrom.sizes [sample]-avg.bw
+```
 
+## 3. Calculate scores at target genomic regions with computeMatrix
+The `computeMatrix` python tool is part of the deepTools2 list of tools. [computeMatrix](https://deeptools.readthedocs.io/en/develop/content/tools/computeMatrix.html) calculates the scores from input files (.bw) over genomic regions specified within the annotation (.gtf or .txt). For this analysis, the `reference-point` option was used, which aligns the reads to provided TSSs and over a desired region upstream and downstream of the TSS without any scaling by gene length. The output is a matrix containing the scores (.gz) which can be used for plotting profiles as performed in this study, or as a heatmap if desired.
 
+To prepare matricies from input averaged bigwigs over the master TSS list, the following general command was used for each mutant and its corresponding wild-type control:
+```
+source activate deeptools
+computeMatrix reference-point -S [WT]-avg.bw [mutant]-avg.bw -R Pelechano.2013_mRNA.gtf -a 1500 -b 500 --missingDataAsZero -o [mutant]-avg.gz
+```
+The matrix is generated with scores over the inputed region in bp downstream of (after) the TSS `-a` and upstream of (before) the TSS `-b` with these commands. The ``--missingDataAsZero`` option is used to remove missing data where there is no coverage. The data over these regions is treated as zeros. The default bin size `-bs` is 10bp and was used for all analyses in Chapter 3.
 
+For more information on the various options used with computeMatrix, run the following command:
+```
+computeMatrix reference-point –help
+```
+
+To prepare matricies from individual replicates over TSS lists ranked by Rpb3 occupancy or gene length, the following command was used for mutant datasets with their wild-type control samples:
+```
+computeMatrix reference-point -S [WT]-1.bw [WT]-2.bw ... [WT]-n.bw [mutant]-1.bw [mutant]-2.bw ... [mutant]-n.bw -R Length_quartiles.txt -a 1500 -b 500 --missingDataAsZero -o [mutant]-len.gz
+computeMatrix reference-point -S [WT]-1.bw [WT]-2.bw ... [WT]-n.bw [mutant]-1.bw [mutant]-2.bw ... [mutant]-n.bw -R Rpb3_quartiles.txt -a 1500 -b 500 --missingDataAsZero -o [mutant]-expr.gz
+```
+## 4. Visualize metagene analysis with a profile using plotProfile
+The `plotProfile` python tool is also from the deepTools2 list of tools. [plotProfile](https://deeptools.readthedocs.io/en/develop/content/tools/plotProfile.html) creates a plot using the scores and genomic region contained within the matrix outputted from `computeMatrix`. These can be outputted as images or as PDFs (I used .png and .pdf for each).
+
+To generate the images used for average profiles over the master TSS list (Figures 3.3A, 3.4A, 3.5A), the following code was run for each corresponding matrix file:
+```
+plotProfile -m [mutant]-avg.gz -o [mutant]-avg.pdf --colors black blue --perGroup --samplesLabel WT [mutant]
+```
+The `--perGroup` option is used to plot each profile onto the same figure. Colors and labels were adjusted using Adobe Illustrator 2024. The colors used is specified with `--colors` and be inputed with either a hexcode (e.g. #eeff22) or by name using [supported colors](https://matplotlib.org/stable/gallery/color/named_colors.html).
+To generate the images used for profiles ranked by Rpb3 occupancy or gene length (Figures B.5 - B.10), the following code was run for each corresponding matrix file:
+```
+plotProfile -m [mutant]-len.gz -o [mutant]-len.png --perGroup --samplesLabel WT-1 WT-2 ... WT-n [mutant]-1 [mutant]-2 ... [mutant]-n
+```
+For this command, `--perGroup` is used to ensure that the profile from each sample is plotted on the same figure, and each quartile is plotted as a separate figure.
