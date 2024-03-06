@@ -63,13 +63,13 @@ wiggletools write [sample]-avg.wig mean [sample]-1.bw [sample]-2.bw ... [sample]
 ### Remove 2-micron sequence from wiggle file if present
 Some of the wiggle files contain scores over the 2-micron plasmid (files from *pob3-Q308K* dataset in this analysis) and they were removed from the wiggle file prior to compression into bigWigs using `sed`.
 ```
- sed -i '/2-micron/d' WT-avg.wig
+sed -i '/2-micron/d' WT-avg.wig
 ```
 
 ### Use wigToBigWig to compress average wiggle files
 The average wiggle files produced with WiggleTools was compressed using `wigToBigWig` tool from the [binary utilities directory from UCSC](https://hgdownload.soe.ucsc.edu/admin/exe/). As stated on the directory, if this utility is freshly downloaded, you will need to update the file system permissions to allow your operating system to run the program.
 ```
-   chmod +x ./filePath/wigToBigWig
+chmod +x ./filePath/wigToBigWig
 ```
 To compress the wiggle file into a bigWig, you need a file containing the size of each chromosome. This is provided in the `sacCer3.chrom.sizes` file, which was obtained from UCSC [here:](https://hgdownload.soe.ucsc.edu/goldenPath/sacCer3/bigZips/).
 ```
